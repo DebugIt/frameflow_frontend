@@ -31,7 +31,8 @@ const Gallery = () => {
     
     
     const [selectedImage, setSelectedImage] = useState(null);
-    const [imageArray, setImageArray] = useState([])
+    const [imageArray, setImageArray] = useState([]);
+
     const [file, setFile] = useState(null)
 
     const handleImageChange = (event) => {
@@ -43,29 +44,47 @@ const Gallery = () => {
         }
     };
 
+    // const fetchPost = async () => {
+    //     try {
+    //         const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/all`);
+    //         console.log(response.data.data); // Assuming the image data is nested in response.data.data
+    //         setImageArray(response.data.data); // Update the state with fetched image data
+    //         if(response.data.success === true){
+    //             setOpenSnack(true);
+    //         }
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    // };
+
     const fetchPost = async () => {
         try {
             const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/all`);
-            console.log(response.data.data); // Assuming the image data is nested in response.data.data
+            console.log("Response:", response); // Log the entire response object
             setImageArray(response.data.data); // Update the state with fetched image data
-            if(response.data.success === true){
+            if (response.data.success === true) {
                 setOpenSnack(true);
             }
         } catch (error) {
             console.log(error);
         }
     };
+    
+
 
 
     const createPost = async () => {
-        
+        console.log(process.env.REACT_APP_BASE_URL)
+        console.log(file)
         if(!file){
             setOpenErrSnack(true);
         }else{
             try {
                 let formData = new FormData();
                 formData.append("image", file); // Use "image" as the key
-                await axios.post(`${process.env.REACT_APP_BASE_URL}/upload/cloud`, formData).then((res) => {
+                await axios.post(`${process.env.REACT_APP_BASE_URL}/upload/cloud`, formData, {
+                    headers: {"Content-Type": `multipart/form-data`}
+                }).then((res) => {
                     console.log(res);
                     // Optionally, you can fetch the updated image list after successful upload
                     fetchPost();
@@ -76,12 +95,49 @@ const Gallery = () => {
                 }).catch(err => console.log(err));
                 
             } catch (error) {
-                console.log(error)
+                if (error.response) {
+                    console.log("Server responded with an error:", error.response.data);
+                } else if (error.request) {
+                    console.log("No response received:", error.request);
+                } else {
+                    console.log("Error setting up the request:", error.message);
+                }
             }
         }
 
         
     };
+    
+    // const createPost = async () => {
+    //     if (!file) {
+    //         setOpenErrSnack(true);
+    //         return;
+    //     }
+    
+    //     try {
+    //         let formData = new FormData();
+    //         formData.append("image", file);
+    
+    //         const response = await axios.post(`${process.env.REACT_APP_BASE_URL}/upload/cloud`, formData, {
+    //             headers: {
+    //                 "Content-Type": "multipart/form-data", // Set the correct content type
+    //             },
+    //         });
+    
+    //         console.log(response);
+    
+    //         // Assuming response contains data with image URL
+    //         if (response.data.success === true) {
+    //             setOpenSnack(true);
+    //             fetchPost(); // Fetch the updated image list after successful upload
+    //             handleClose();
+    //             console.log("Post uploaded")
+    //         }
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    // };
+    
     
 
 
@@ -125,16 +181,22 @@ const Gallery = () => {
             </div>
 
             <ImageList className='w-full' cols={3}>
-                {imageArray.map((item, index) => (
-                    <ImageListItem key={index} className='border border-black'>
-                    <img
-                        src={item.imageUrl}
-                        // alt={item.title}
-                        loading="lazy"
-                    />
-                    </ImageListItem>
-                ))}
+                {imageArray && imageArray.length > 0 ? (
+                    imageArray.map((item, index) => (
+                        <ImageListItem key={index} className='border border-black'>
+                            <img
+                                src={item.imageUrl}
+                                alt="Uploaded"
+                                loading="lazy"
+                            />
+                        </ImageListItem>
+                    ))
+                ) : (
+                    <div>No images available.</div>
+                )}
             </ImageList>
+
+
             
             <div>
                 <Modal
